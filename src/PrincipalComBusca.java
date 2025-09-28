@@ -1,9 +1,7 @@
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -11,35 +9,53 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
+import com.google.gson.Gson;
+import br.com.alura.screenmatch.modelos.Titulo;
 
 public class PrincipalComBusca {
     public static void main(String[] args) throws IOException, InterruptedException {
         String chave = null;
         Scanner input = new Scanner(System.in);
 
-        InputStream fis = new FileInputStream("apiKey.txt");
-        Reader isr = new InputStreamReader(fis, "UTF-8");
-        BufferedReader br = new BufferedReader(isr);
+        BufferedReader br = new BufferedReader(
+                            new InputStreamReader(
+                            new FileInputStream("apiKey.txt"), 
+                            StandardCharsets.UTF_8));
+        String linha;
+        boolean chaveEncontrada = false;
 
-        String linha = br.readLine();
-
-        while (linha != null) {
+        while ((linha = br.readLine()) != null) {
             if (linha.startsWith("APIKEYOMDB")) {
-                chave = linha.split("=")[1];
+                String[] partes = linha.split("=", 2);
+                if (partes.length == 2) {
+                    chave = partes[1].trim();
+                    chaveEncontrada = true;
+                }
                 break;
             }
-            linha = br.readLine();
         }
         br.close();
+        
+        if (!chaveEncontrada) {
+            input.close();
+            throw new RuntimeException("Chave de API não encontrada!");
+        }
 
         System.out.println("Digite um filme para buscar: ");
         var busca = URLEncoder.encode(input.nextLine(), StandardCharsets.UTF_8);
-        String endereco = "https://www.omdbapi.com/?t="+ busca + "&apikey=" + chave;
+        String endereco = "https://www.omdbapi.com/?t=" + busca + "&apikey=" + chave;
 
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(endereco)).build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        input.close();
+        
+        String json = response.body();
+        System.out.println(json);
 
-        System.out.println(response.body());
+        Gson gson = new Gson();
+        Titulo meuTitulo = gson.fromJson(json, Titulo.class);
+        System.out.println(meuTitulo);
+
     }
 }
