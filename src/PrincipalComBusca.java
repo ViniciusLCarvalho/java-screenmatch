@@ -14,6 +14,7 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import br.com.alura.screenmatch.excecao.ErroDeConversaoDeAnoException;
 import br.com.alura.screenmatch.modelos.Titulo;
 import br.com.alura.screenmatch.modelos.TituloOmdb;
 
@@ -23,9 +24,9 @@ public class PrincipalComBusca {
         Scanner input = new Scanner(System.in);
 
         BufferedReader br = new BufferedReader(
-                            new InputStreamReader(
-                            new FileInputStream("apiKey.txt"), 
-                            StandardCharsets.UTF_8));
+                new InputStreamReader(
+                        new FileInputStream("apiKey.txt"),
+                        StandardCharsets.UTF_8));
         String linha;
         boolean chaveEncontrada = false;
 
@@ -40,7 +41,7 @@ public class PrincipalComBusca {
             }
         }
         br.close();
-        
+
         if (!chaveEncontrada) {
             input.close();
             throw new RuntimeException("Chave de API não encontrada!");
@@ -50,22 +51,33 @@ public class PrincipalComBusca {
         var busca = URLEncoder.encode(input.nextLine(), StandardCharsets.UTF_8);
         String endereco = "https://www.omdbapi.com/?t=" + busca + "&apikey=" + chave;
 
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(endereco)).build();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        input.close();
-        
-        String json = response.body();
-        System.out.println(json);
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(endereco)).build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            input.close();
 
-        Gson gson = new GsonBuilder()
-                .setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
-                .create();
-        // Titulo meuTitulo = gson.fromJson(json, Titulo.class);
-        TituloOmdb meuTituloOmdb = gson.fromJson(json, TituloOmdb.class);
-        System.out.println(meuTituloOmdb);
-        Titulo meuTitulo = new Titulo(meuTituloOmdb);
-        System.out.println("Titulo já convertido");
-        System.out.println(meuTitulo);
+            String json = response.body();
+            System.out.println(json);
+
+            Gson gson = new GsonBuilder()
+                    .setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
+                    .create();
+            // Titulo meuTitulo = gson.fromJson(json, Titulo.class);
+            TituloOmdb meuTituloOmdb = gson.fromJson(json, TituloOmdb.class);
+            System.out.println(meuTituloOmdb);
+            // try {
+            Titulo meuTitulo = new Titulo(meuTituloOmdb);
+            System.out.println("Titulo já convertido");
+            System.out.println(meuTitulo);
+        } catch (NumberFormatException e) {
+            System.out.println("Aconteceu um erro: " + e.getMessage());
+        } catch (IllegalArgumentException e){
+            System.out.println("busca falhou, verifique o endereço");
+        } catch (ErroDeConversaoDeAnoException e){
+            System.out.println(e.getMessage());
+        }
+
+        System.out.println("O programa finalizou corretamente!");
     }
 }
