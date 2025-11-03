@@ -1,5 +1,6 @@
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
@@ -41,13 +42,16 @@ public class PrincipalComBusca {
             Gson gson = new GsonBuilder()
                     .setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
                     .create();
-            // Titulo meuTitulo = gson.fromJson(json, Titulo.class);
             TituloOmdb meuTituloOmdb = gson.fromJson(json, TituloOmdb.class);
             System.out.println(meuTituloOmdb);
-            // try {
+
             Titulo meuTitulo = new Titulo(meuTituloOmdb);
             System.out.println("Titulo já convertido");
             System.out.println(meuTitulo);
+
+            FileWriter escrita = new FileWriter("Filme.txt");
+            escrita.write(meuTitulo.toString());
+            escrita.close();
         } catch (NumberFormatException e) {
             System.out.println("Aconteceu um erro: " + e.getMessage());
         } catch (IllegalArgumentException e) {
@@ -59,7 +63,7 @@ public class PrincipalComBusca {
         System.out.println("O programa finalizou corretamente!");
     }
 
-    public static String buscaApiKey() throws IOException{
+    public static String buscaApiKey() throws IOException {
         String chave = null;
         BufferedReader br = new BufferedReader(
                 new InputStreamReader(
